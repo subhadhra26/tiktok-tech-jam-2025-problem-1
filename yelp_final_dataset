@@ -1,0 +1,26 @@
+import pandas as pd
+import numpy as np
+
+# Load the previously saved merged DataFrame (businesses and reviews)
+df_yelp = pd.read_json('/Users/rgsstudent/Desktop/yelp_dataset/yelp_merged_data.json', lines=True)
+
+# Define a chunk size for the large user dataset
+chunk_size = 50000 
+user_chunks = []
+
+# Process the large user file in chunks
+for user_chunk in pd.read_json('/Users/rgsstudent/Desktop/yelp_dataset/yelp_academic_dataset_user.json', lines=True, chunksize=chunk_size):
+    # Select the columns you need from each user chunk
+    user_subset = user_chunk[['user_id', 'average_stars', 'review_count', 'name']]
+    
+    # Merge the current user chunk with the combined business/reviews DataFrame
+    # An inner merge ensures we only keep users that are in the main DataFrame
+    merged_chunk = pd.merge(df_yelp, user_subset, on='user_id', how='inner')
+    user_chunks.append(merged_chunk)
+
+# Concatenate all the merged chunks into a final DataFrame
+final_df = pd.concat(user_chunks, ignore_index=True)
+
+print("Final DataFrame with user information:")
+print(final_df.head())
+print(f"\nTotal rows in the final DataFrame: {len(final_df)}")

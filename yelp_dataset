@@ -1,0 +1,46 @@
+import pandas as pd
+import numpy as np
+
+# Load the smaller businesses DataFrame
+df_yelp = pd.read_json('/Users/rgsstudent/Desktop/yelp_dataset/yelp_business.json', lines=True)
+
+# List the columns you want to remove
+columns_to_drop = ['hours', 'address', 'postal_code', 'latitude', 'longitude', 'is_open']
+df_yelp.drop(columns=columns_to_drop, inplace=True)
+
+# Define your lists for filtering
+states_to_keep = ['FL', 'CA', 'TX']
+categories_to_keep = 'Restaurants|Food|Bars|Sandwiches|Coffee & Tea|Breakfast & Brunch|Pizza|Fast Food|Burgers|Seafood'
+
+# Apply both filters at once
+filtered_df = df_yelp[
+    (df_yelp['state'].isin(states_to_keep)) & 
+    (df_yelp['categories'].str.contains(categories_to_keep, case=False, na=False))
+]
+
+# Create an empty list to store the merged chunks
+merged_chunks = []
+
+# Process the large review file in chunks and merge on the fly
+chunk_size = 50000  # Adjust as needed based on your computer's RAM
+for review_chunk in pd.read_json('/Users/rgsstudent/Desktop/yelp_dataset/yelp_review.json', lines=True, chunksize=chunk_size):
+    # Select the columns you need from the review chunk
+    reviews_subset = review_chunk[['user_id', 'stars', 'text', 'business_id']]
+    
+    # Merge the current review chunk with the filtered businesses DataFrame
+    merged_chunk = pd.merge(filtered_df, reviews_subset, on='business_id', how='inner')
+    merged_chunks.append(merged_chunk)
+
+# Concatenate all the merged chunks into a final DataFrame
+merged_df = pd.concat(merged_chunks, ignore_index=True)
+
+print("\nFinal Merged DataFrame:")
+print(merged_df.head())
+print(f"\nTotal rows in the merged DataFrame: {len(merged_df)}")
+
+# Now, save the merged DataFrame to a new JSON file
+output_path = '/Users/rgsstudent/Desktop/yelp_dataset/yelp_merged_data.json'
+
+merged_df.to_json(output_path, orient='records', lines=True)
+
+print(f"\nDataFrame successfully saved to {output_path}")
