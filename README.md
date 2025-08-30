@@ -26,7 +26,7 @@ and unzip the yelp_merged_dataset.json and yelp_business.json files
 
 **4.Run the code chunks to see the result**
 
-### Setup Instructions
+### Tools Used
 **Development tools used:** Colab, VScode
 
 **APIs used:** Qwen
